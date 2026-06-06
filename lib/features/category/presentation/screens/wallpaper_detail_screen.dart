@@ -63,7 +63,7 @@ class _WallpaperDetailScreenState extends State<WallpaperDetailScreen> {
         url: widget.wallpaper.imageUrl,
         filename: ShareFileHelper.imageFilename(widget.wallpaper.name),
         subject: 'Pakistan Independence Day Wallpaper',
-        text: 'Pakistan Independence Day Wallpaper',
+        text: 'Happy Independence Day',
       );
     } catch (_) {
       if (!mounted) return;

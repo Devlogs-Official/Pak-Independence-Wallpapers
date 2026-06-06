@@ -79,9 +79,7 @@ class _LiveWallpaperDetailScreenState extends State<LiveWallpaperDetailScreen> {
         url: widget.wallpaper.imageUrl,
         filename: ShareFileHelper.videoFilename(widget.wallpaper.name),
         subject: 'Pakistan Independence Day Live Wallpaper',
-        text: _wallpaperTitle.isEmpty
-            ? 'Pakistan Independence Day Live Wallpaper'
-            : _wallpaperTitle,
+        text: 'Happy Independence Day',
       );
     } catch (_) {
       if (!mounted) return;
@@ -90,8 +88,6 @@ class _LiveWallpaperDetailScreenState extends State<LiveWallpaperDetailScreen> {
       if (mounted) setState(() => _isSharing = false);
     }
   }
-
-  String get _wallpaperTitle => widget.wallpaper.name.trim();
 
   void _showSnack(String message, bool success) {
     ScaffoldMessenger.of(context).showSnackBar(

@@ -28,10 +28,23 @@ class ProfileAvatar extends StatelessWidget {
         ],
       ),
       child: Center(
-        child: Icon(
-          Icons.person_rounded,
-          color: Colors.white,
-          size: radius * 1.16,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(
+              Icons.nightlight_round,
+              color: Colors.white,
+              size: radius * 1.22,
+            ),
+            Transform.translate(
+              offset: Offset(radius * 0.26, -radius * 0.14),
+              child: Icon(
+                Icons.star_rounded,
+                color: AppColors.accent,
+                size: radius * 0.58,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -27,7 +27,7 @@ class _GreetingCardDetailScreenState extends State<GreetingCardDetailScreen> {
         url: widget.wallpaper.imageUrl,
         filename: ShareFileHelper.imageFilename(widget.wallpaper.name),
         subject: 'Pakistan Independence Day Greeting Card',
-        text: 'Pakistan Independence Day Greeting Card',
+        text: 'Happy Independence Day',
       );
     } catch (_) {
       if (!mounted) return;

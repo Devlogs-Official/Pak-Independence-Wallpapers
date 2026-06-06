@@ -197,7 +197,7 @@ class _WallpaperGridItem extends StatelessWidget {
 
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppColors.primary, width: 1),
           ),
           height: height,

@@ -3,11 +3,7 @@ import 'package:pakistani_independence_wallpapers/core/constants/app_colors.dart
 import 'package:pakistani_independence_wallpapers/features/home/presentation/models/category_ui_model.dart';
 
 class CategoryCard extends StatelessWidget {
-  const CategoryCard({
-    super.key,
-    required this.category,
-    required this.onTap,
-  });
+  const CategoryCard({super.key, required this.category, required this.onTap});
 
   final CategoryUiModel category;
   final VoidCallback onTap;
@@ -18,22 +14,25 @@ class CategoryCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
+      // shadowColor: Colors.white60,
+      elevation: 1,
+
       child: InkWell(
         onTap: onTap,
         child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.18),
-                blurRadius: 22,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
+          // decoration: BoxDecoration(
+          //   borderRadius: BorderRadius.circular(22),
+          //   border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+          //   boxShadow: [
+          //     BoxShadow(
+          //       color: AppColors.primary.withValues(alpha: 0.18),
+          //       blurRadius: 22,
+          //       offset: const Offset(0, 12),
+          //     ),
+          //   ],
+          // ),
           child: Stack(
             children: [
               Positioned.fill(
