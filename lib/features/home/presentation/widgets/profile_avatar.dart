@@ -8,40 +8,30 @@ class ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: radius * 2,
       height: radius * 2,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          colors: [Color(0xFF425548), Color(0xFF123B2C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(
-              Icons.nightlight_round,
-              color: Colors.white,
-              size: radius * 1.22,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.35),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
-            Transform.translate(
-              offset: Offset(radius * 0.26, -radius * 0.14),
-              child: Icon(
-                Icons.star_rounded,
-                color: AppColors.accent,
-                size: radius * 0.58,
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ClipOval(
+              child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
               ),
             ),
           ],
