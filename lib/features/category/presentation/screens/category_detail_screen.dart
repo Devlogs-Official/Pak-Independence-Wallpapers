@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:pakistani_independence_wallpapers/core/constants/app_colors.dart';
 import 'package:pakistani_independence_wallpapers/domain/entities/wallpaper_entity.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/screens/greeting_card_detail_screen.dart';
@@ -116,11 +115,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               slivers: [
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                  sliver: SliverMasonryGrid.count(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childCount: wallpapers.length,
+                  sliver: SliverGrid.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: _gridAspectRatioFor(widget.categoryId),
+                    ),
+                    itemCount: wallpapers.length,
                     itemBuilder: (context, index) {
                       final wallpaper = wallpapers[index];
                       return GestureDetector(
@@ -129,10 +131,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         },
                         child: Hero(
                           tag: 'wallpaper-${wallpaper.id}',
-                          child: _WallpaperGridItem(
-                            wallpaper: wallpaper,
-                            index: index,
-                          ),
+                          child: _WallpaperGridItem(wallpaper: wallpaper),
                         ),
                       );
                     },
@@ -170,6 +169,13 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     };
   }
 
+  double _gridAspectRatioFor(int categoryId) {
+    return switch (categoryId) {
+      3 => 0.68,
+      _ => 0.68,
+    };
+  }
+
   void _openWallpaperDetail(BuildContext context, WallpaperEntity wallpaper) {
     final screen = switch (widget.categoryId) {
       2 => LiveWallpaperDetailScreen(wallpaper: wallpaper),
@@ -182,15 +188,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 }
 
 class _WallpaperGridItem extends StatelessWidget {
-  const _WallpaperGridItem({required this.wallpaper, required this.index});
+  const _WallpaperGridItem({required this.wallpaper});
 
   final WallpaperEntity wallpaper;
-  final int index;
 
   @override
   Widget build(BuildContext context) {
-    final height = index.isEven ? 230.0 : 290.0;
-
     return Consumer<FavoritesProvider>(
       builder: (context, favoritesProvider, child) {
         final isFavorite = favoritesProvider.isFavorite(wallpaper.imageUrl);
@@ -200,7 +203,7 @@ class _WallpaperGridItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppColors.primary, width: 1),
           ),
-          height: height,
+          clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
               Positioned.fill(

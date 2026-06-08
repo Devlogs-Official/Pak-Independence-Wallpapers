@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:pakistani_independence_wallpapers/core/constants/app_colors.dart';
@@ -17,6 +19,58 @@ class GreetingCardDetailScreen extends StatefulWidget {
 class _GreetingCardDetailScreenState extends State<GreetingCardDetailScreen> {
   int _retryToken = 0;
   bool _isSharing = false;
+  late Future<Size> _imageSizeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageSizeFuture = _loadImageSize(widget.wallpaper.imageUrl);
+  }
+
+  @override
+  void didUpdateWidget(covariant GreetingCardDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.wallpaper.imageUrl != widget.wallpaper.imageUrl) {
+      _imageSizeFuture = _loadImageSize(widget.wallpaper.imageUrl);
+    }
+  }
+
+  Future<Size> _loadImageSize(String imageUrl) {
+    final completer = Completer<Size>();
+    final imageProvider = CachedNetworkImageProvider(imageUrl);
+    final imageStream = imageProvider.resolve(ImageConfiguration.empty);
+    late final ImageStreamListener listener;
+
+    listener = ImageStreamListener(
+      (imageInfo, _) {
+        imageStream.removeListener(listener);
+        if (!completer.isCompleted) {
+          completer.complete(
+            Size(
+              imageInfo.image.width.toDouble(),
+              imageInfo.image.height.toDouble(),
+            ),
+          );
+        }
+      },
+      onError: (error, stackTrace) {
+        imageStream.removeListener(listener);
+        if (!completer.isCompleted) {
+          completer.completeError(error, stackTrace);
+        }
+      },
+    );
+
+    imageStream.addListener(listener);
+    return completer.future;
+  }
+
+  void _retryImageLoad() {
+    setState(() {
+      _retryToken++;
+      _imageSizeFuture = _loadImageSize(widget.wallpaper.imageUrl);
+    });
+  }
 
   Future<void> _shareGreetingCard() async {
     if (_isSharing) return;
@@ -101,28 +155,26 @@ class _GreetingCardDetailScreenState extends State<GreetingCardDetailScreen> {
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.all(22),
-                        child: AspectRatio(
-                          aspectRatio: 4 / 3,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.28),
-                                  blurRadius: 32,
-                                  offset: const Offset(0, 18),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.22),
-                              ),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
+                        child: FutureBuilder<Size>(
+                          future: _imageSizeFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return _GreetingCardError(
+                                onRetry: _retryImageLoad,
+                              );
+                            }
+
+                            final imageSize = snapshot.data;
+                            final aspectRatio = imageSize == null
+                                ? 4 / 3
+                                : imageSize.width / imageSize.height;
+
+                            return _GreetingCardFrame(
+                              aspectRatio: aspectRatio,
                               child: CachedNetworkImage(
                                 key: ValueKey(_retryToken),
                                 imageUrl: widget.wallpaper.imageUrl,
-                                fit: BoxFit.contain,
+                                fit: BoxFit.cover,
                                 fadeInDuration: const Duration(
                                   milliseconds: 260,
                                 ),
@@ -136,14 +188,12 @@ class _GreetingCardDetailScreenState extends State<GreetingCardDetailScreen> {
                                 },
                                 errorWidget: (context, url, error) {
                                   return _GreetingCardError(
-                                    onRetry: () {
-                                      setState(() => _retryToken++);
-                                    },
+                                    onRetry: _retryImageLoad,
                                   );
                                 },
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -185,6 +235,55 @@ class _GreetingCardDetailScreenState extends State<GreetingCardDetailScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _GreetingCardFrame extends StatelessWidget {
+  const _GreetingCardFrame({required this.aspectRatio, required this.child});
+
+  final double aspectRatio;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    const borderRadius = 24.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var width = constraints.maxWidth;
+        var height = width / aspectRatio;
+
+        if (height > constraints.maxHeight) {
+          height = constraints.maxHeight;
+          width = height * aspectRatio;
+        }
+
+        return Align(
+          alignment: Alignment.center,
+          child: SizedBox(
+            width: width,
+            height: height,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(borderRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.28),
+                    blurRadius: 32,
+                    offset: const Offset(0, 18),
+                  ),
+                ],
+                border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(borderRadius),
+                child: child,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
