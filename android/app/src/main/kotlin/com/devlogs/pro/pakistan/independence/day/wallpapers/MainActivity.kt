@@ -1,4 +1,4 @@
-package com.devlogs.pro.pakistani_independence_wallpapers
+package com.devlogs.pro.pakistan.independence.day.wallpapers
 
 import android.app.WallpaperManager
 import android.content.ComponentName
