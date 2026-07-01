@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:pakistani_independence_wallpapers/core/constants/app_colors.dart';
 import 'package:pakistani_independence_wallpapers/core/utils/share_file_helper.dart';
 import 'package:pakistani_independence_wallpapers/domain/entities/wallpaper_entity.dart';
+import 'package:pakistani_independence_wallpapers/services/ad_service.dart';
 
 class GreetingCardDetailScreen extends StatefulWidget {
   const GreetingCardDetailScreen({super.key, required this.wallpaper});
@@ -77,11 +78,13 @@ class _GreetingCardDetailScreenState extends State<GreetingCardDetailScreen> {
     setState(() => _isSharing = true);
 
     try {
-      await ShareFileHelper.shareRemoteFile(
-        url: widget.wallpaper.imageUrl,
-        filename: ShareFileHelper.imageFilename(widget.wallpaper.name),
-        subject: 'Pakistan Independence Day Greeting Card',
-        text: 'Happy Independence Day',
+      await AppAdService.instance.showInterstitialForGreetingShareThen(
+        onCompleted: () => ShareFileHelper.shareRemoteFile(
+          url: widget.wallpaper.imageUrl,
+          filename: ShareFileHelper.imageFilename(widget.wallpaper.name),
+          subject: 'Pakistan Independence Day Greeting Card',
+          text: 'Happy Independence Day',
+        ),
       );
     } catch (_) {
       if (!mounted) return;

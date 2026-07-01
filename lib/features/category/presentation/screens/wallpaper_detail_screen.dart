@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pakistani_independence_wallpapers/core/utils/share_file_helper.dart';
 import 'package:pakistani_independence_wallpapers/domain/entities/wallpaper_entity.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/providers/wallpaper_apply_provider.dart';
+import 'package:pakistani_independence_wallpapers/services/ad_service.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -44,14 +45,21 @@ class _WallpaperDetailScreenState extends State<WallpaperDetailScreen> {
     if (applyProvider.isApplying) return;
 
     final sheetNavigator = Navigator.of(sheetContext);
-    final result = await applyProvider.apply(
-      imageUrl: widget.wallpaper.imageUrl,
-      target: target,
+    WallpaperApplyResult? result;
+    await AppAdService.instance.showInterstitialForWallpaperApplyThen(
+      onCompleted: () async {
+        result = await applyProvider.apply(
+          imageUrl: widget.wallpaper.imageUrl,
+          target: target,
+        );
+      },
     );
 
-    if (!mounted) return;
-    sheetNavigator.pop();
-    _showSnack(result.message, result.success);
+    if (!mounted || result == null) return;
+    if (sheetNavigator.canPop()) {
+      sheetNavigator.pop();
+    }
+    _showSnack(result!.message, result!.success);
   }
 
   Future<void> _shareWallpaper() async {
@@ -59,11 +67,13 @@ class _WallpaperDetailScreenState extends State<WallpaperDetailScreen> {
     setState(() => _isSharing = true);
 
     try {
-      await ShareFileHelper.shareRemoteFile(
-        url: widget.wallpaper.imageUrl,
-        filename: ShareFileHelper.imageFilename(widget.wallpaper.name),
-        subject: 'Pakistan Independence Day Wallpaper',
-        text: 'Happy Independence Day',
+      await AppAdService.instance.showInterstitialForShareThen(
+        onCompleted: () => ShareFileHelper.shareRemoteFile(
+          url: widget.wallpaper.imageUrl,
+          filename: ShareFileHelper.imageFilename(widget.wallpaper.name),
+          subject: 'Pakistan Independence Day Wallpaper',
+          text: 'Happy Independence Day',
+        ),
       );
     } catch (_) {
       if (!mounted) return;

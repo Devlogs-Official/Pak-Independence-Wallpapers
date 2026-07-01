@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:pakistani_independence_wallpapers/core/config/config_manager.dart';
 import 'package:pakistani_independence_wallpapers/core/constants/app_colors.dart';
 import 'package:pakistani_independence_wallpapers/domain/entities/wallpaper_entity.dart';
+import 'package:pakistani_independence_wallpapers/features/ads/widgets/native_ad_tile.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/screens/greeting_card_detail_screen.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/screens/live_wallpapers_detail_screen.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/screens/wallpaper_detail_screen.dart';
@@ -94,55 +96,7 @@ class _FavoriteCategoryTab extends StatelessWidget {
         }
 
         return CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              sliver: SliverMasonryGrid.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childCount: wallpapers.length,
-                itemBuilder: (context, index) {
-                  final wallpaper = wallpapers[index];
-                  final height = index.isEven ? 230.0 : 290.0;
-
-                  return GestureDetector(
-                    onTap: () => _openDetail(context, wallpaper),
-                    child: SizedBox(
-                      height: height,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: WallpaperTile(
-                              imageUrl: wallpaper.thumbnailUrl,
-                            ),
-                          ),
-                          Positioned(
-                            top: 10,
-                            right: 10,
-                            child: Material(
-                              color: Colors.black.withValues(alpha: 0.42),
-                              shape: const CircleBorder(),
-                              child: IconButton(
-                                onPressed: () {
-                                  provider.removeFavorite(wallpaper.imageUrl);
-                                },
-                                icon: const Icon(
-                                  Icons.favorite_rounded,
-                                  color: Colors.redAccent,
-                                ),
-                                tooltip: 'Remove from favorites',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+          slivers: _buildFavoriteGridSlivers(wallpapers, provider),
         );
       },
     );
@@ -156,6 +110,91 @@ class _FavoriteCategoryTab extends StatelessWidget {
     };
 
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
+  int _nativeAdInterval() {
+    final config = ConfigManager.config;
+    if (!config.canShowNativeOnFavorites) return 0;
+    return config.gridNativeInterval.clamp(8, 12);
+  }
+
+  List<Widget> _buildFavoriteGridSlivers(
+    List<WallpaperEntity> wallpapers,
+    FavoritesProvider provider,
+  ) {
+    final interval = _nativeAdInterval();
+    final slivers = <Widget>[];
+    var start = 0;
+
+    while (start < wallpapers.length) {
+      final count = interval <= 0
+          ? wallpapers.length - start
+          : (wallpapers.length - start).clamp(0, interval);
+      final chunkStart = start;
+
+      slivers.add(
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(16, chunkStart == 0 ? 16 : 0, 16, 24),
+          sliver: SliverMasonryGrid.count(
+            crossAxisCount: 2,
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 14,
+            childCount: count,
+            itemBuilder: (context, index) {
+              final globalIndex = chunkStart + index;
+              final wallpaper = wallpapers[globalIndex];
+              final height = globalIndex.isEven ? 230.0 : 290.0;
+
+              return GestureDetector(
+                onTap: () => _openDetail(context, wallpaper),
+                child: SizedBox(
+                  height: height,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: WallpaperTile(imageUrl: wallpaper.thumbnailUrl),
+                      ),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Material(
+                          color: Colors.black.withValues(alpha: 0.42),
+                          shape: const CircleBorder(),
+                          child: IconButton(
+                            onPressed: () {
+                              provider.removeFavorite(wallpaper.imageUrl);
+                            },
+                            icon: const Icon(
+                              Icons.favorite_rounded,
+                              color: Colors.redAccent,
+                            ),
+                            tooltip: 'Remove from favorites',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      start += count;
+      if (interval > 0 && start < wallpapers.length && start % interval == 0) {
+        slivers.add(
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 24),
+            sliver: SliverToBoxAdapter(child: NativeAdTile(height: 360)),
+          ),
+        );
+      }
+
+      if (interval <= 0) break;
+    }
+
+    return slivers;
   }
 }
 

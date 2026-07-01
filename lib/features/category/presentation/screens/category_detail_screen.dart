@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pakistani_independence_wallpapers/core/config/config_manager.dart';
 import 'package:pakistani_independence_wallpapers/core/constants/app_colors.dart';
 import 'package:pakistani_independence_wallpapers/domain/entities/wallpaper_entity.dart';
+import 'package:pakistani_independence_wallpapers/features/ads/widgets/native_ad_tile.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/screens/greeting_card_detail_screen.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/screens/live_wallpapers_detail_screen.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/screens/wallpaper_detail_screen.dart';
@@ -113,30 +115,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             child: CustomScrollView(
               controller: _scrollController,
               slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                  sliver: SliverGrid.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: _gridAspectRatioFor(widget.categoryId),
-                    ),
-                    itemCount: wallpapers.length,
-                    itemBuilder: (context, index) {
-                      final wallpaper = wallpapers[index];
-                      return GestureDetector(
-                        onTap: () {
-                          _openWallpaperDetail(context, wallpaper);
-                        },
-                        child: Hero(
-                          tag: 'wallpaper-${wallpaper.id}',
-                          child: _WallpaperGridItem(wallpaper: wallpaper),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                ..._buildWallpaperGridSlivers(wallpapers),
                 if (provider.isLoadingMoreCategory(widget.categoryId))
                   const SliverToBoxAdapter(
                     child: Padding(
@@ -174,6 +153,66 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       3 => 0.68,
       _ => 0.68,
     };
+  }
+
+  int _nativeAdInterval() {
+    final config = ConfigManager.config;
+    if (!config.canShowNativeInWallpaperGrid) return 0;
+    return config.gridNativeInterval.clamp(8, 12);
+  }
+
+  List<Widget> _buildWallpaperGridSlivers(List<WallpaperEntity> wallpapers) {
+    final interval = _nativeAdInterval();
+    final slivers = <Widget>[];
+    var start = 0;
+
+    while (start < wallpapers.length) {
+      final count = interval <= 0
+          ? wallpapers.length - start
+          : (wallpapers.length - start).clamp(0, interval);
+      final chunkStart = start;
+
+      slivers.add(
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(16, chunkStart == 0 ? 16 : 0, 16, 20),
+          sliver: SliverGrid.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: _gridAspectRatioFor(widget.categoryId),
+            ),
+            itemCount: count,
+            itemBuilder: (context, index) {
+              final wallpaper = wallpapers[chunkStart + index];
+              return GestureDetector(
+                onTap: () {
+                  _openWallpaperDetail(context, wallpaper);
+                },
+                child: Hero(
+                  tag: 'wallpaper-${wallpaper.id}',
+                  child: _WallpaperGridItem(wallpaper: wallpaper),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+      start += count;
+      if (interval > 0 && start < wallpapers.length && start % interval == 0) {
+        slivers.add(
+          const SliverPadding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 20),
+            sliver: SliverToBoxAdapter(child: NativeAdTile(height: 360)),
+          ),
+        );
+      }
+
+      if (interval <= 0) break;
+    }
+
+    return slivers;
   }
 
   void _openWallpaperDetail(BuildContext context, WallpaperEntity wallpaper) {

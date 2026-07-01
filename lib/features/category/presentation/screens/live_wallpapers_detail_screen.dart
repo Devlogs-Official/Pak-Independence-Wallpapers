@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pakistani_independence_wallpapers/core/utils/share_file_helper.dart';
 import 'package:pakistani_independence_wallpapers/domain/entities/wallpaper_entity.dart';
 import 'package:pakistani_independence_wallpapers/features/category/presentation/providers/wallpaper_apply_provider.dart';
+import 'package:pakistani_independence_wallpapers/services/ad_service.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
@@ -54,7 +55,54 @@ class _LiveWallpaperDetailScreenState extends State<LiveWallpaperDetailScreen> {
     if (context.read<WallpaperApplyProvider>().isApplying) {
       return;
     }
-    await _applyLiveWallpaper();
+
+    if (!AppAdService.instance.shouldGateWallpaperUnlock) {
+      await _applyLiveWallpaper();
+      return;
+    }
+
+    final shouldWatchAd = await _showUnlockDialog();
+    if (!mounted || !shouldWatchAd) return;
+
+    await AppAdService.instance.showRewardedThen(
+      onRewardEarned: _applyLiveWallpaper,
+      onAdUnavailable: () {
+        if (!mounted) return;
+        _showSnack(
+          'Rewarded ad is not available yet. Please try again.',
+          false,
+        );
+      },
+    );
+  }
+
+  Future<bool> _showUnlockDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text('Unlock Live Wallpaper'),
+          content: const Text(
+            'To unlock and apply this live wallpaper, please watch a short ad.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Watch Ad'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result ?? false;
   }
 
   Future<void> _applyLiveWallpaper() async {
@@ -75,11 +123,13 @@ class _LiveWallpaperDetailScreenState extends State<LiveWallpaperDetailScreen> {
     if (_isSharing) return;
     setState(() => _isSharing = true);
     try {
-      await ShareFileHelper.shareRemoteFile(
-        url: widget.wallpaper.imageUrl,
-        filename: ShareFileHelper.videoFilename(widget.wallpaper.name),
-        subject: 'Pakistan Independence Day Live Wallpaper',
-        text: 'Happy Independence Day',
+      await AppAdService.instance.showInterstitialForShareThen(
+        onCompleted: () => ShareFileHelper.shareRemoteFile(
+          url: widget.wallpaper.imageUrl,
+          filename: ShareFileHelper.videoFilename(widget.wallpaper.name),
+          subject: 'Pakistan Independence Day Live Wallpaper',
+          text: 'Happy Independence Day',
+        ),
       );
     } catch (_) {
       if (!mounted) return;

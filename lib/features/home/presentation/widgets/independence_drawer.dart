@@ -5,6 +5,7 @@ import 'package:pakistani_independence_wallpapers/features/category/presentation
 import 'package:pakistani_independence_wallpapers/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:pakistani_independence_wallpapers/features/home/presentation/widgets/drawer_menu_tile.dart';
 import 'package:pakistani_independence_wallpapers/features/home/presentation/widgets/profile_avatar.dart';
+import 'package:pakistani_independence_wallpapers/services/consent_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -119,6 +120,11 @@ class IndependenceDrawer extends StatelessWidget {
                     _openExternal(context, AppConstants.privacyPolicyUrl),
               ),
               DrawerMenuTile(
+                icon: Icons.ads_click_rounded,
+                title: 'Ad Privacy Choices',
+                onTap: () => _showAdPrivacyChoices(context),
+              ),
+              DrawerMenuTile(
                 icon: Icons.description_rounded,
                 title: 'Terms & Conditions',
                 onTap: () =>
@@ -159,6 +165,11 @@ class IndependenceDrawer extends StatelessWidget {
         subject: AppConstants.appName,
       ),
     );
+  }
+
+  Future<void> _showAdPrivacyChoices(BuildContext context) async {
+    Navigator.of(context).maybePop();
+    await ConsentService.instance.showPrivacyOptionsForm();
   }
 
   Future<void> _openExternal(BuildContext context, String url) async {
